@@ -24,6 +24,13 @@ h1 {
   color: #1f2937;
 }
 
+.subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
 h2 {
   margin-bottom: 16px;
   color: #1f2937;
@@ -32,7 +39,7 @@ h2 {
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 18px;
   margin-bottom: 28px;
   flex-wrap: wrap;
@@ -138,6 +145,12 @@ button:disabled {
 
 .error-message {
   color: #dc2626;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.success-message {
+  color: #16a34a;
   margin-bottom: 12px;
   font-weight: 600;
 }

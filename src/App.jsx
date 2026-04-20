@@ -7,11 +7,13 @@ function App() {
   const [todos, setTodos] = useState([])
   const [inputValue, setInputValue] = useState('')
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [user, setUser] = useState(null)
+  const [error, setError] = useState('')
 
   async function fetchTodos() {
     setLoading(true)
+    setError('')
 
     const { data, error } = await supabase
       .from('todos')
@@ -20,6 +22,7 @@ function App() {
 
     if (error) {
       console.error('Error fetching todos:', error.message)
+      setError('Could not load todos.')
     } else {
       setTodos(data)
     }
@@ -35,11 +38,15 @@ function App() {
         console.error('Error getting session:', error.message)
       }
 
-      setUser(data.session?.user ?? null)
+      const currentUser = data.session?.user ?? null
+      setUser(currentUser)
       setAuthLoading(false)
 
-      if (data.session?.user) {
+      if (currentUser) {
         fetchTodos()
+      } else {
+        setTodos([])
+        setLoading(false)
       }
     }
 
@@ -47,14 +54,16 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
       setAuthLoading(false)
 
-      if (session?.user) {
+      if (currentUser) {
         fetchTodos()
       } else {
         setTodos([])
+        setLoading(false)
       }
     })
 
@@ -63,15 +72,21 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     if (!inputValue.trim()) return
+
+    setError('')
 
     const { data, error } = await supabase
       .from('todos')
-      .insert({ text: inputValue.trim() })
+      .insert({
+        text: inputValue.trim(),
+      })
       .select()
 
     if (error) {
       console.error('Error adding todo:', error.message)
+      setError('Could not add todo.')
     } else {
       setTodos([...todos, data[0]])
       setInputValue('')
@@ -79,6 +94,8 @@ function App() {
   }
 
   const deleteTodo = async (id) => {
+    setError('')
+
     const { error } = await supabase
       .from('todos')
       .delete()
@@ -86,6 +103,7 @@ function App() {
 
     if (error) {
       console.error('Error deleting todo:', error.message)
+      setError('Could not delete todo.')
     } else {
       setTodos(todos.filter((todo) => todo.id !== id))
     }
@@ -93,17 +111,26 @@ function App() {
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut()
-    if (error) console.error('Error signing out:', error.message)
+
+    if (error) {
+      console.error('Error signing out:', error.message)
+      setError('Could not sign out.')
+    }
   }
 
   if (authLoading) {
-    return <div className="app"><p>Loading...</p></div>
+    return (
+      <div className="app">
+        <p>Loading...</p>
+      </div>
+    )
   }
 
   if (!user) {
     return (
       <div className="app">
-        <h1>React Todo App</h1>
+        <h1>Authenticated Todo App</h1>
+        <p className="subtitle">Manage your tasks securely</p>
         <Auth />
       </div>
     )
@@ -112,12 +139,18 @@ function App() {
   return (
     <div className="app">
       <div className="header">
-        <h1>React Todo App</h1>
+        <div>
+          <h1>Authenticated Todo App</h1>
+          <p className="subtitle">Manage your tasks securely</p>
+        </div>
+
         <div className="user-box">
           <span>{user.email}</span>
           <button onClick={handleSignOut}>Sign Out</button>
         </div>
       </div>
+
+      {error && <p className="error-message">{error}</p>}
 
       <form className="todo-form" onSubmit={handleSubmit}>
         <input
