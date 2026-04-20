@@ -129,7 +129,7 @@ function App() {
   if (!user) {
     return (
       <div className="app">
-        <h1>Authenticated Todo App</h1>
+        <h1>Authentica ted Todo App</h1>
         <p className="subtitle">Manage your tasks securely</p>
         <Auth />
       </div>
